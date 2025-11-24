@@ -1,0 +1,43 @@
+{
+  "mcpServers": {
+    "local-python-stdio": {
+      "comment": "Local Python MCP server using stdio",
+      "command": "python3",
+      "args": ["examples/plugins/mcp_echo.py"]
+    },
+    "docker-echo": {
+      "comment": "Containerized MCP server",
+      "image": "mcp-echo:latest",
+      "timeout": 30
+    },
+    "docker-with-volumes": {
+      "comment": "Docker server with volume mounts",
+      "image": "my-data-processor:latest",
+      "volumes": {
+        "/mnt/storage/data": "/data",
+        "${HOME}/configs": "/configs"
+      },
+      "env": {
+        "DATA_PATH": "/data",
+        "CONFIG_PATH": "/configs"
+      },
+      "network": "mcp-network"
+    },
+    "remote-http-server": {
+      "comment": "Remote MCP server over HTTP",
+      "type": "http",
+      "url": "https://api.example.com/mcp",
+      "headers": {
+        "Authorization": "Bearer ${API_TOKEN}",
+        "X-Client-ID": "mcp-hub"
+      },
+      "timeout": 60
+    },
+    "official-filesystem": {
+      "comment": "Official MCP filesystem server",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"],
+      "timeout": 30
+    }
+  }
+}

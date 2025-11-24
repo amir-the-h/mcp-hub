@@ -1,0 +1,41 @@
+# Binaries
+mcp-hub
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test and coverage files
+*.test
+*.out
+coverage.txt
+*.coverprofile
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Git
+.git/
+.gitignore
+
+# Documentation (not needed in image)
+README.md
+*.md
+docs/
+
+# Example and test files
+examples/
+config-mixed.example.json
+config.json
+
+# Development files
+.env
+.env.local
+
+# OS files
+.DS_Store
+Thumbs.db

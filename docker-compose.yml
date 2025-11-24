@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  mcp-hub:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mcp-hub
+    ports:
+      - "8080:8080"
+    volumes:
+      # Mount configuration file
+      - ./config.json:/app/config.json:ro
+      # Mount Docker socket if using Docker transport for MCP servers
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Optional: Mount additional directories for file-based MCP servers
+      # - ./plugins:/plugins:ro
+      # - ./data:/data
+    environment:
+      # Pass through environment variables for config expansion
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+      - BRAVE_API_KEY=${BRAVE_API_KEY:-}
+      - API_TOKEN=${API_TOKEN:-}
+    restart: unless-stopped
+    networks:
+      - mcp-network
+
+networks:
+  mcp-network:
+    driver: bridge
