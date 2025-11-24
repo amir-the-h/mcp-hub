@@ -1,5 +1,10 @@
 # MCP-Hub
 
+[![Docker Hub](https://img.shields.io/docker/v/amirtheh/mcp-hub?label=Docker%20Hub&logo=docker)](https://hub.docker.com/r/amirtheh/mcp-hub)
+[![Docker Pulls](https://img.shields.io/docker/pulls/amirtheh/mcp-hub?logo=docker)](https://hub.docker.com/r/amirtheh/mcp-hub)
+[![Docker Image Size](https://img.shields.io/docker/image-size/amirtheh/mcp-hub/latest?logo=docker)](https://hub.docker.com/r/amirtheh/mcp-hub)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/amir-the-h/mcp-hub/docker-build-push.yml?branch=main&logo=github)](https://github.com/amir-the-h/mcp-hub/actions)
+
 A Go-based hub that aggregates multiple MCP (Model Context Protocol) servers and exposes their tools through a unified HTTP API.
 
 ## Features
