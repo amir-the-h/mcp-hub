@@ -35,9 +35,8 @@ jobs:
         with:
           images: ${{ env.DOCKER_IMAGE }}
           tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
-            type=sha,prefix={{branch}}-
-            type=ref,event=branch
+            type=raw,value=latest
+            type=raw,value=main
       
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
