@@ -166,20 +166,32 @@ GITHUB_TOKEN=your_token_here ./mcp-hub
 
 ## Docker Deployment
 
+### Image Variants
+
+The repository provides two Docker image variants, optimized for different use cases:
+
+#### 1. **Standard Image** (`Dockerfile` / `mcp-hub:latest`)
+- **Size**: ~47MB
+- **Includes**: Alpine Linux + Docker CLI + mcp-hub binary
+- **Use when**: You need Docker transport for running MCP servers in containers, or mixed transports
+- **Best for**: Production deployments with container-based MCP servers
+
+#### 2. **Local MCP Servers Image** (`Dockerfile.local` / `mcp-hub:local`)
+- **Size**: ~800MB
+- **Includes**: Node.js 20, Python 3, uv, curl, git, and mcp-hub binary
+- **Use when**: You want to run local stdio-based MCP servers (Node.js, Python) in the same container
+- **Best for**: Self-contained deployments where the hub and all MCP servers run together
+
 ### Build Docker Image
-Note: this repository also includes a `Dockerfile` at the project root — see it for the exact image build used by CI/deploy.
 
-```dockerfile
-FROM golang:1.21-alpine AS builder
-WORKDIR /app
-COPY . .
-RUN cd cmd/mcp-hub && go build -o /mcp-hub
+To build a specific image locally:
 
-FROM node:20-alpine
-RUN apk add --no-cache python3 py3-pip
-COPY --from=builder /mcp-hub /usr/local/bin/mcp-hub
-WORKDIR /app
-CMD ["mcp-hub", "--config", "/config/config.json"]
+```bash
+# Standard image (with Docker CLI)
+docker build -t mcp-hub:latest .
+
+# Local MCP servers image (with Node.js, Python, uv)
+docker build -f Dockerfile.local -t mcp-hub:local .
 ```
 
 ### Run with Docker

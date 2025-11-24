@@ -1,0 +1,77 @@
+# Dockerfile.local - MCP Hub with embedded local MCP server support
+# This image includes Node.js, Python, and Rust (uv) for running local MCP servers
+# within the same container. Use this when you want to run stdio-based MCP servers
+# without external dependencies or separate containers.
+#
+# Size: ~800MB (includes Node.js, Python, and development tools)
+# Use when:
+#   - You want to run Node.js, Python, or Rust-based MCP servers without Docker transport
+#   - You want a self-contained deployment with all runtimes included
+#   - You're running the hub and local servers in the same container
+#
+# Example usage:
+#   docker build -f Dockerfile.local -t mcp-hub:local .
+#   docker run -d -p 8080:8080 -v $(pwd)/config.json:/app/config.json:ro mcp-hub:local
+
+# Stage 1: Build the Go binary
+FROM golang:1.23-alpine AS builder
+
+WORKDIR /build
+
+# Copy go mod files
+COPY go.mod go.sum* ./
+
+# Download dependencies
+RUN if [ -f go.sum ]; then go mod download; fi
+
+# Copy source code
+COPY . .
+
+# Build the binary with optimizations
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+    -ldflags='-w -s -extldflags "-static"' \
+    -a \
+    -o mcp-hub \
+    ./cmd/mcp-hub
+
+# Stage 2: Runtime with Node.js, Python, uv, and curl
+FROM node:20-bookworm-slim
+
+# Install additional tools needed for MCP servers
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 \
+    python3-pip \
+    python3-venv \
+    curl \
+    ca-certificates \
+    git \
+    bash \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install uv (Rust package manager, fast Python dependency installer)
+# Note: uv requires the Rust toolchain, which is already available in Debian
+# As an alternative, we can use pipx to install uv if needed
+RUN pip install --no-cache-dir uv
+
+# Copy the mcp-hub binary from builder
+COPY --from=builder /build/mcp-hub /usr/local/bin/mcp-hub
+
+# Create non-root user
+RUN groupadd -g 1000 mcpuser && \
+    useradd -D -u 1000 -G mcpuser mcpuser && \
+    useradd -m -u 1000 -g mcpuser mcpuser && \
+    mkdir -p /app /plugins && \
+    chown -R mcpuser:mcpuser /app /plugins
+
+# Set working directory
+WORKDIR /app
+
+# Switch to non-root user
+USER mcpuser
+
+# Expose the default port
+EXPOSE 8080
+
+# The binary accepts --config flag for configuration file path
+ENTRYPOINT ["/usr/local/bin/mcp-hub"]
+CMD ["--config", "/app/config.json"]

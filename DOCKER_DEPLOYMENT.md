@@ -14,14 +14,14 @@ This guide covers deploying mcp-hub in Docker containers.
 docker build -t mcp-hub:latest .
 ```
 
-### 2. Minimal Image (`Dockerfile.scratch`)
-- **Size**: ~6MB
-- **Includes**: Only the mcp-hub binary (scratch-based)
-- **Use when**: You only need stdio or HTTP transports (no Docker transport)
-- **Best for**: Minimal footprint, stdio/HTTP-only deployments
+### 2. Local MCP Servers Image (`Dockerfile.local`)
+- **Size**: ~800MB
+- **Includes**: Node.js 20, Python 3, uv, curl, git, and mcp-hub binary
+- **Use when**: You want to run local stdio-based MCP servers in the same container
+- **Best for**: Self-contained deployments with Node.js/Python MCP servers
 
 ```bash
-docker build -f Dockerfile.scratch -t mcp-hub:minimal .
+docker build -f Dockerfile.local -t mcp-hub:local .
 ```
 
 ## Quick Start
@@ -149,6 +149,68 @@ networks:
 ```
 
 ## Configuration Examples
+
+### Self-Contained Deployment with Local MCP Servers
+
+Use the `mcp-hub:local` image when you want to run everything in a single container without external services:
+
+```json
+{
+  "mcpServers": {
+    "node-server": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/data"]
+    },
+    "python-script": {
+      "command": "python3",
+      "args": ["/plugins/my_mcp_server.py"]
+    },
+    "custom-binary": {
+      "command": "/plugins/custom-mcp-tool"
+    },
+    "uv-project": {
+      "command": "uv",
+      "args": ["run", "python", "-m", "my_mcp_module"],
+      "env": {
+        "PYTHONPATH": "/plugins"
+      }
+    }
+  }
+}
+```
+
+Run with volume mounts for custom scripts:
+
+```bash
+docker run -d \
+  --name mcp-hub \
+  -p 8080:8080 \
+  -v $(pwd)/config.json:/app/config.json:ro \
+  -v $(pwd)/plugins:/plugins:ro \
+  -v /data:/data \
+  --restart unless-stopped \
+  mcp-hub:local
+```
+
+Or with Docker Compose:
+
+```yaml
+version: '3.8'
+
+services:
+  mcp-hub:
+    image: mcp-hub:local
+    container_name: mcp-hub
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./config.json:/app/config.json:ro
+      - ./plugins:/plugins:ro
+      - ./data:/data
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+```
 
 ### Mixed Transport Configuration
 

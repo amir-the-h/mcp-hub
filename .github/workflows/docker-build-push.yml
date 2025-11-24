@@ -12,6 +12,15 @@ env:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - dockerfile: ./Dockerfile
+            image-suffix: ""
+            description: "Standard image (with Docker CLI)"
+          - dockerfile: ./Dockerfile.local
+            image-suffix: "-local"
+            description: "Local MCP servers image (with Node.js, Python, uv)"
     
     steps:
       - name: Checkout code
@@ -29,20 +38,20 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       
-      - name: Extract metadata (tags, labels)
+      - name: Extract metadata (tags, labels) - ${{ matrix.description }}
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.DOCKER_IMAGE }}
           tags: |
-            type=raw,value=latest
-            type=raw,value=main
+            type=raw,value=latest${{ matrix.image-suffix }}
+            type=raw,value=main${{ matrix.image-suffix }}
       
-      - name: Build and push Docker image
+      - name: Build and push Docker image - ${{ matrix.description }}
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile
+          file: ${{ matrix.dockerfile }}
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
@@ -51,4 +60,4 @@ jobs:
           cache-to: type=gha,mode=max
       
       - name: Image digest
-        run: echo "Image pushed with digest ${{ steps.build.outputs.digest }}"
+        run: echo "Image '${{ matrix.description }}' pushed with digest ${{ steps.build.outputs.digest }}"
