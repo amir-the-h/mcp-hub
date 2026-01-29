@@ -15,7 +15,7 @@ import (
 
 // New creates an HTTP server that serves MCP Streamable HTTP using the SDK.
 // It builds a single SDK Server instance and keeps it synchronized with the
-// hub registry (tools aggregated and namespaced as <plugin>:<tool>).
+// hub registry (tools aggregated and namespaced as <plugin>---<tool>).
 func New(reg *registry.Registry, pm *plugin.Manager) *http.Server {
 	impl := &mcp.Implementation{Name: "mcp-hub", Version: "0.1.0"}
 	sdkServer := mcp.NewServer(impl, &mcp.ServerOptions{HasTools: true})
@@ -30,7 +30,7 @@ func New(reg *registry.Registry, pm *plugin.Manager) *http.Server {
 		for snapshot := range ch {
 			desired := make(map[string]struct{})
 			for _, t := range snapshot {
-				namespaced := t.PluginID + "-" + t.Name
+				namespaced := t.PluginID + "---" + t.Name
 				desired[namespaced] = struct{}{}
 				if !registered[namespaced] {
 					// add tool with simple object input schema
@@ -43,11 +43,11 @@ func New(reg *registry.Registry, pm *plugin.Manager) *http.Server {
 					handler := func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 						// parse namespaced name
 						name := req.Params.Name
-						idx := strings.Index(name, "-")
+						idx := strings.Index(name, "---")
 						var pluginID, toolName string
 						if idx >= 0 {
 							pluginID = name[:idx]
-							toolName = name[idx+1:]
+							toolName = name[idx+3:]
 						} else {
 							// fallback: if only one server, use it
 							servers := pm.ListServers()
@@ -55,7 +55,7 @@ func New(reg *registry.Registry, pm *plugin.Manager) *http.Server {
 								pluginID = servers[0]
 								toolName = name
 							} else {
-								return nil, fmt.Errorf("tool name must be namespaced as <plugin>-<tool>")
+								return nil, fmt.Errorf("tool name must be namespaced as <plugin>---<tool>")
 							}
 						}
 
