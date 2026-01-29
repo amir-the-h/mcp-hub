@@ -30,7 +30,7 @@ func New(reg *registry.Registry, pm *plugin.Manager) *http.Server {
 		for snapshot := range ch {
 			desired := make(map[string]struct{})
 			for _, t := range snapshot {
-				namespaced := t.PluginID + ":" + t.Name
+				namespaced := t.PluginID + "-" + t.Name
 				desired[namespaced] = struct{}{}
 				if !registered[namespaced] {
 					// add tool with simple object input schema
@@ -43,7 +43,7 @@ func New(reg *registry.Registry, pm *plugin.Manager) *http.Server {
 					handler := func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 						// parse namespaced name
 						name := req.Params.Name
-						idx := strings.Index(name, ":")
+						idx := strings.Index(name, "-")
 						var pluginID, toolName string
 						if idx >= 0 {
 							pluginID = name[:idx]
@@ -55,7 +55,7 @@ func New(reg *registry.Registry, pm *plugin.Manager) *http.Server {
 								pluginID = servers[0]
 								toolName = name
 							} else {
-								return nil, fmt.Errorf("tool name must be namespaced as <plugin>:<tool>")
+								return nil, fmt.Errorf("tool name must be namespaced as <plugin>-<tool>")
 							}
 						}
 
