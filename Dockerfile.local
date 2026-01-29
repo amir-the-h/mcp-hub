@@ -57,7 +57,9 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
 COPY --from=builder /build/mcp-hub /usr/local/bin/mcp-hub
 
 # Use existing node user (UID/GID 1000) instead of creating a new user
-RUN mkdir -p /app /plugins && \
+RUN groupadd --gid 980 docker && \
+    usermod -aG docker node && \
+    mkdir -p /app /plugins && \
     chown -R node:node /app /plugins
 
 # Set working directory
